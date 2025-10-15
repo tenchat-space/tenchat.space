@@ -31,7 +31,6 @@ import type { DecryptedMessage, EncryptedMessage, Conversation, User } from '../
 // Remove local stub services; use Appwrite-backed services only
 import { giftingService } from '@/lib/appwrite/services/gifting.service';
 import { messagingService as appwriteMessagingService } from '@/lib/appwrite/services';
-import { messagingService as appwriteMessagingService } from '@/lib/appwrite/services';
 import { GiftDialog } from '../gifting/gift-dialog';
 
 interface ChatInterfaceProps {

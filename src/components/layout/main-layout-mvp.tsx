@@ -15,12 +15,15 @@ import {
   Wallet,
   LogOut,
   Menu,
-  X
+  X,
+  Rss
 } from 'lucide-react';
 import { useAppwrite } from '@/contexts/AppwriteContext';
 import { ConversationList } from '../messaging/conversation-list';
 import { ChatInterface } from '../messaging/chat-interface';
 import { NewChatModal } from '../messaging/new-chat-modal';
+import { StoriesPanel } from '../messaging/stories-panel';
+import { ChannelsPanel } from '../messaging/channels-panel';
 import { SettingsOverlay } from '../settings/settings-overlay';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -37,7 +40,8 @@ interface SidebarItem {
 
 const leftSidebarItems: SidebarItem[] = [
   { id: 'chats', label: 'Chats', icon: MessageSquare },
-  { id: 'groups', label: 'Groups', icon: Users },
+  { id: 'stories', label: 'Stories', icon: Rss },
+  { id: 'channels', label: 'Channels', icon: Users },
   { id: 'contacts', label: 'Contacts', icon: UserPlus },
   { id: 'calls', label: 'Calls', icon: Phone },
   { id: 'saved', label: 'Saved', icon: Bookmark },
@@ -163,11 +167,12 @@ export function MainLayout({ currentUser, onLogin, onLogout }: MainLayoutProps) 
                 />
               )}
               
-              {activeLeftTab === 'groups' && (
-                <div className="p-4 text-center text-gray-400">
-                  <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>Groups feature coming soon</p>
-                </div>
+              {activeLeftTab === 'stories' && (
+                <StoriesPanel />
+              )}
+
+              {activeLeftTab === 'channels' && (
+                <ChannelsPanel />
               )}
               
               {activeLeftTab === 'contacts' && (
