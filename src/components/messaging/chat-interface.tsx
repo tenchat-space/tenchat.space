@@ -28,7 +28,9 @@ import { Textarea } from '../ui/textarea';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Separator } from '../ui/separator';
 import type { DecryptedMessage, EncryptedMessage, Conversation, User } from '../../types';
-import { messagingService, giftingService, keyManagementService } from '../../services';
+// Remove local stub services; use Appwrite-backed services only
+import { giftingService } from '@/lib/appwrite/services/gifting.service';
+import { messagingService as appwriteMessagingService } from '@/lib/appwrite/services';
 import { messagingService as appwriteMessagingService } from '@/lib/appwrite/services';
 import { GiftDialog } from '../gifting/gift-dialog';
 
@@ -73,12 +75,10 @@ export function ChatInterface({ conversation, currentUser, onClose }: ChatInterf
       }
     };
 
-    messagingService.on('message:sent', handleNewMessage);
-    messagingService.on('message:received', handleNewMessage);
+    // Realtime handled via Appwrite elsewhere; no local events
 
     return () => {
-      messagingService.off('message:sent', handleNewMessage);
-      messagingService.off('message:received', handleNewMessage);
+      // no-op
     };
   }, [conversation.id, currentUser.id]);
 

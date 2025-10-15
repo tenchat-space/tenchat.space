@@ -30,26 +30,10 @@ export function ConversationList({
   useEffect(() => {
     console.log('[ConversationList] Loading conversations for user:', currentUser.id);
     loadConversations();
-    createSelfConversation();
-    
-    // Auto-select self conversation on first load for instant demo
-    const timer = setTimeout(() => {
-      if (selfConversation && !selectedConversationId) {
-        console.log('[ConversationList] Auto-selecting self conversation');
-        onSelectConversation(selfConversation);
-      }
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    // No auto-created demo/self conversation; show only real data
   }, [currentUser.id]);
   
-  useEffect(() => {
-    // Auto-select self conversation when it's created
-    if (selfConversation && !selectedConversationId) {
-      console.log('[ConversationList] Self conversation created, auto-selecting');
-      onSelectConversation(selfConversation);
-    }
-  }, [selfConversation]);
+  useEffect(() => {}, []);
 
   const loadConversations = async () => {
     try {
@@ -66,126 +50,9 @@ export function ConversationList({
     }
   };
 
-  const createSelfConversation = () => {
-    // Create a self-chat conversation with impressive demo messages
-    const selfConv: Conversation = {
-      id: `self-${currentUser.id}`,
-      participants: [currentUser.id],
-      type: 'direct',
-      lastMessage: {
-        id: 'self-last',
-        senderId: currentUser.id,
-        recipientId: currentUser.id,
-        ciphertext: '🎁 Try sending gifts, crypto, or NFTs! Perfect for demos! 🚀',
-        nonce: '',
-        timestamp: new Date(),
-        ratchetHeader: '',
-        messageNumber: 0,
-      },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      metadata: {
-        name: `${currentUser.displayName} (Me) - Try Features Here!`,
-        settings: {
-          ephemeralEnabled: false,
-          notificationsEnabled: true,
-          blockchainAnchoringEnabled: false,
-        },
-        isSelfChat: true,
-        demoMessages: [
-          { text: '👋 Welcome! This is your personal testing space', type: 'system' },
-          { text: '💎 Send yourself gifts to see the UI', type: 'system' },
-          { text: '💰 Test crypto transfers across 8 chains', type: 'system' },
-          { text: '🦄 Try Epic & Legendary gifts - they\'re amazing!', type: 'system' },
-          { text: '📱 Generate QR codes for quick sharing', type: 'system' },
-          { text: '🎨 Everything works exactly like real chats!', type: 'system' },
-        ],
-      } as any, // Use any to allow extra properties
-    };
-    setSelfConversation(selfConv);
-    console.log('Self-chat created:', selfConv);
-  };
+  const createSelfConversation = () => {};
 
-  const createDemoConversations = (): Conversation[] => {
-    // Add demo conversations to make the list look populated
-    return [
-      {
-        id: `bhav-${currentUser.id}`,
-        participants: [currentUser.id, 'bhav'],
-        type: 'direct',
-        lastMessage: {
-          id: 'bhav-last',
-          senderId: 'bhav',
-          recipientId: currentUser.id,
-          ciphertext: 'Just sent you some ETH, check it out! 💰',
-          nonce: '',
-          timestamp: new Date(Date.now() - 3600000),
-          ratchetHeader: '',
-          messageNumber: 1,
-        },
-        createdAt: new Date(Date.now() - 86400000),
-        updatedAt: new Date(Date.now() - 3600000),
-        metadata: {
-          name: 'Bhav',
-          settings: {
-            ephemeralEnabled: false,
-            notificationsEnabled: true,
-            blockchainAnchoringEnabled: true,
-          },
-        },
-      },
-      {
-        id: `demo-liam-${currentUser.id}`,
-        participants: [currentUser.id, 'demo-liam'],
-        type: 'direct',
-        lastMessage: {
-          id: 'demo-liam-last',
-          senderId: 'demo-liam',
-          recipientId: currentUser.id,
-          ciphertext: 'The new NFT drop is live! 🎨',
-          nonce: '',
-          timestamp: new Date(Date.now() - 5400000),
-          ratchetHeader: '',
-          messageNumber: 2,
-        },
-        createdAt: new Date(Date.now() - 172800000),
-        updatedAt: new Date(Date.now() - 5400000),
-        metadata: {
-          name: 'Liam',
-          settings: {
-            ephemeralEnabled: false,
-            notificationsEnabled: true,
-            blockchainAnchoringEnabled: true,
-          },
-        },
-      },
-      {
-        id: `demo-jobin-${currentUser.id}`,
-        participants: [currentUser.id, 'demo-jobin'],
-        type: 'direct',
-        lastMessage: {
-          id: 'demo-jobin-last',
-          senderId: currentUser.id,
-          recipientId: 'demo-jobin',
-          ciphertext: 'Thanks for the legendary gift! 🦄✨',
-          nonce: '',
-          timestamp: new Date(Date.now() - 7200000),
-          ratchetHeader: '',
-          messageNumber: 3,
-        },
-        createdAt: new Date(Date.now() - 259200000),
-        updatedAt: new Date(Date.now() - 7200000),
-        metadata: {
-          name: 'Jobin',
-          settings: {
-            ephemeralEnabled: false,
-            notificationsEnabled: true,
-            blockchainAnchoringEnabled: true,
-          },
-        },
-      },
-    ];
-  };
+  const createDemoConversations = (): Conversation[] => { return []; };
 
   const convertToLegacyConversation = (appwriteConv: AppwriteConversation): Conversation => {
     return {
@@ -237,15 +104,13 @@ export function ConversationList({
     }
   };
 
-  // Combine self conversation with demo conversations and regular conversations
-  const demoConvs = conversations.length === 0 ? createDemoConversations() : [];
-  const allConversations = selfConversation 
-    ? [selfConversation, ...demoConvs, ...conversations] 
-    : [...demoConvs, ...conversations];
+  // Show only real conversations
+  const demoConvs: Conversation[] = [];
+  const allConversations = conversations;
 
   console.log('[ConversationList] All conversations:', allConversations.length);
   console.log('[ConversationList] Self conversation:', selfConversation ? 'exists' : 'null');
-  console.log('[ConversationList] Demo conversations:', demoConvs.length);
+  // Removed demo conversations
   console.log('[ConversationList] Regular conversations:', conversations.length);
 
   const filteredConversations = allConversations.filter(conversation => {

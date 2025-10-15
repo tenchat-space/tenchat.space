@@ -252,7 +252,7 @@ export function NewChatModal({
                   ) : (
                     <>
                       <MessageSquarePlus className="w-4 h-4 mr-2" />
-                      Start Chat Anyway (Demo Ready!)
+                      Start Chat
                     </>
                   )}
                 </Button>
@@ -349,7 +349,7 @@ export function NewChatModal({
                   ) : (
                     <>
                       <MessageSquarePlus className="w-4 h-4 mr-2" />
-                      Start Chat Anyway (Demo Ready!)
+                      Start Chat
                     </>
                   )}
                 </Button>
