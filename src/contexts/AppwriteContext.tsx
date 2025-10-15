@@ -42,14 +42,18 @@ export function AppwriteProvider({ children }: { children: React.ReactNode }) {
         setCurrentAccount(user);
         setIsAuthenticated(true);
         
-        // Load user from database
+        // Ensure users row exists and load it (upsert)
         try {
-          const dbUser = await userService.getUser(user.$id);
+          const dbUser = await userService.upsertUser(user.$id, {
+            username: user.name || undefined,
+            displayName: user.name || undefined,
+            walletAddress: (user.prefs as any)?.walletEth?.toLowerCase?.(),
+          } as any);
           if (mounted && dbUser) {
             setCurrentUser(dbUser);
           }
         } catch (error) {
-          console.error('[Auth] Error loading user:', error);
+          console.error('[Auth] Error ensuring user row:', error);
         }
       } catch (error) {
         console.log('[Auth] Not authenticated');
@@ -108,14 +112,18 @@ export function AppwriteProvider({ children }: { children: React.ReactNode }) {
       setCurrentAccount(user);
       setIsAuthenticated(true);
 
-      // Load user from database
+      // Ensure users row exists and load it (upsert)
       try {
-        const dbUser = await userService.getUser(user.$id);
+        const dbUser = await userService.upsertUser(user.$id, {
+          username: user.name || undefined,
+          displayName: user.name || undefined,
+          walletAddress: (user.prefs as any)?.walletEth?.toLowerCase?.(),
+        } as any);
         if (dbUser) {
           setCurrentUser(dbUser);
         }
       } catch (error) {
-        console.error('[Auth] Error loading user after wallet login:', error);
+        console.error('[Auth] Error ensuring user row after wallet login:', error);
       }
 
       console.log('[Auth] Wallet login successful');
@@ -141,7 +149,11 @@ export function AppwriteProvider({ children }: { children: React.ReactNode }) {
     if (!currentAccount) return;
     
     try {
-      const dbUser = await userService.getUser(currentAccount.$id);
+      const dbUser = await userService.upsertUser(currentAccount.$id, {
+        username: currentAccount.name || undefined,
+        displayName: currentAccount.name || undefined,
+        walletAddress: (currentAccount.prefs as any)?.walletEth?.toLowerCase?.(),
+      } as any);
       if (dbUser) {
         setCurrentUser(dbUser);
       }

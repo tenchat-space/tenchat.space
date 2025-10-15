@@ -34,8 +34,7 @@ export const DATABASE_IDS = {
 // TABLE IDS - WHISPERRNOTE DATABASE
 // ============================================
 export const WHISPERRNOTE_TABLES = {
-  // Prefer VITE_TABLE_* but support legacy VITE_COLLECTION_* for compatibility
-  USERS: (import.meta.env as any).VITE_TABLE_USERS || (import.meta.env as any).VITE_COLLECTION_USERS,
+  // Intentionally left without USERS: users table belongs to chat database
 } as const;
 
 // ============================================
@@ -49,6 +48,9 @@ export const CHAT_TABLES = {
   CONTACTS: (import.meta.env as any).VITE_TABLE_CONTACTS || (import.meta.env as any).VITE_COLLECTION_CONTACTS,
   TYPING_INDICATORS: (import.meta.env as any).VITE_TABLE_TYPING_INDICATORS || (import.meta.env as any).VITE_COLLECTION_TYPING_INDICATORS,
   PRESENCE: (import.meta.env as any).VITE_TABLE_PRESENCE || (import.meta.env as any).VITE_COLLECTION_PRESENCE,
+
+  // Users (lives in chat DB)
+  USERS: (import.meta.env as any).VITE_TABLE_USERS || (import.meta.env as any).VITE_COLLECTION_USERS || 'users',
 
   // Social Features
   STORIES: (import.meta.env as any).VITE_TABLE_STORIES || (import.meta.env as any).VITE_COLLECTION_STORIES,
@@ -110,9 +112,7 @@ export type BucketId = typeof BUCKET_IDS[keyof typeof BUCKET_IDS];
  * Get database ID for a table
  */
 export const getDatabaseForTable = (tableId: string): DatabaseId => {
-  if (Object.values(WHISPERRNOTE_TABLES).includes(tableId as any)) {
-    return DATABASE_IDS.WHISPERRNOTE;
-  }
+  // All current tables, including USERS, live in chat database
   return DATABASE_IDS.CHAT;
 };
 

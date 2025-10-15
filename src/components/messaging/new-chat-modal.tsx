@@ -90,7 +90,7 @@ export function NewChatModal({
         targetUser.id
       );
       
-      toast.success(`Started chat with @${targetUser.name}`);
+      toast.success(`Started chat with @${targetUser.username || targetUser.displayName || 'user'}`);
       onChatCreated?.(conversation.$id);
       onOpenChange(false);
       setSearchQuery('');
@@ -111,11 +111,11 @@ export function NewChatModal({
 
     setLoading(true);
     try {
-      // Try to find user by Appwrite account name
+      // Try to find user by username
       let targetUser: User | null = null;
       
       if (activeTab === 'username') {
-        // Search by account name
+        // Search by username
         targetUser = await userService.getUserByUsername(searchQuery.trim());
       } else {
         targetUser = await userService.getUserByWallet(searchQuery.trim());
@@ -128,38 +128,15 @@ export function NewChatModal({
           targetUser.id
         );
         
-        toast.success(`Started chat with @${targetUser.name || 'user'}`);
+        toast.success(`Started chat with @${targetUser.username || targetUser.displayName || 'user'}`);
         onChatCreated?.(conversation.$id);
         onOpenChange(false);
         setSearchQuery('');
         setSearchResults([]);
-      } else {
-        // User not found - create demo conversation anyway for impressive demo
-        toast.success(`Demo chat created! (User not found, but you can demo features)`);
-        
-        // Create a mock conversation for demo purposes
-        const mockConv = {
-          $id: `demo-${Date.now()}`,
-          type: 'direct' as const,
-          name: `Demo Chat: @${searchQuery}`,
-          creatorId: currentUserId,
-          participantIds: [currentUserId, 'demo-user'],
-          adminIds: [currentUserId],
-          lastMessageAt: new Date().toISOString(),
-          lastMessageText: 'Demo chat - try sending gifts!',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        onChatCreated?.(mockConv.$id);
-        onOpenChange(false);
-        setSearchQuery('');
       }
     } catch (error) {
       console.error('Error starting chat:', error);
-      // Don't show error - just create demo chat
-      toast.success('Demo chat created! Perfect for showing features');
-      onOpenChange(false);
+      toast.error('Failed to start chat');
     } finally {
       setLoading(false);
     }
@@ -244,10 +221,10 @@ export function NewChatModal({
                       >
                         <Avatar className="h-8 w-8 mr-2">
                           <AvatarFallback className="bg-violet-600">
-                            {(user.name?.[0] || 'U').toUpperCase()}
+                            {(user.username?.[0] || user.displayName?.[0] || 'U').toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-white">@{user.name || 'Anonymous'}</span>
+                        <span className="text-white">@{user.username || user.displayName || 'Anonymous'}</span>
                         {user.walletAddress && (
                           <Badge className="ml-auto bg-purple-900/30 text-purple-400 border-purple-700/30 text-xs">
                             Web3
@@ -259,12 +236,7 @@ export function NewChatModal({
                 </div>
               )}
 
-              {searchQuery && searchResults.length === 0 && !searching && (
-                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                  <p className="text-amber-400 text-sm mb-2">User not found? No problem!</p>
-                  <p className="text-gray-400 text-xs">Click Start Chat anyway to create a demo conversation for your presentation!</p>
-                </div>
-              )}
+              {searchQuery && searchResults.length === 0 && !searching && null}
 
               {searchQuery && (
                 <Button
@@ -346,11 +318,11 @@ export function NewChatModal({
                       >
                         <Avatar className="h-8 w-8 mr-2">
                           <AvatarFallback className="bg-violet-600">
-                            {(user.name?.[0] || 'U').toUpperCase()}
+                            {(user.username?.[0] || user.displayName?.[0] || 'U').toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col items-start">
-                          <span className="text-white">@{user.name || 'Anonymous'}</span>
+                          <span className="text-white">@{user.username || user.displayName || 'Anonymous'}</span>
                           <span className="text-xs text-gray-500 font-mono">
                             {user.walletAddress?.slice(0, 6)}...{user.walletAddress?.slice(-4)}
                           </span>
@@ -361,12 +333,7 @@ export function NewChatModal({
                 </div>
               )}
 
-              {searchQuery && searchResults.length === 0 && !searching && (
-                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                  <p className="text-amber-400 text-sm mb-2">Wallet not found? No problem!</p>
-                  <p className="text-gray-400 text-xs">Click Start Chat anyway to demo the features!</p>
-                </div>
-              )}
+              {searchQuery && searchResults.length === 0 && !searching && null}
 
               {searchQuery && (
                 <Button

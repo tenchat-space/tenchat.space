@@ -89,14 +89,18 @@ export function SettingsOverlay({ open, onOpenChange }: SettingsOverlayProps) {
 
     setSavingUsername(true);
     try {
+      const { userService } = await import('@/lib/appwrite/services');
       const { account } = await import('@/lib/appwrite/config/client');
-      await account.updateName(newUsername.trim());
-      
+      const newName = newUsername.trim();
+      await account.updateName(newName);
+      if (currentAccount?.$id) {
+        await userService.updateUsername(currentAccount.$id, newName);
+      }
+
       toast.success('Username updated successfully!');
       setEditingUsername(false);
-      
-      // Refresh the page to show updated username everywhere
-      setTimeout(() => window.location.reload(), 500);
+      // Soft refresh of local state without full reload
+      setTimeout(() => window.location.reload(), 300);
     } catch (err) {
       const error = err as { message?: string };
       toast.error(error?.message || 'Failed to update username');

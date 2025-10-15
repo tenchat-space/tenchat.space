@@ -1,26 +1,26 @@
 /**
  * User Service
- * Handles user data from the whisperrnote database
+ * Handles user data from the chat database
  */
 
 import { Query, ID } from 'appwrite';
 import { tablesDB, account } from '../config/client';
-import { DATABASE_IDS, WHISPERRNOTE_TABLES } from '../config/constants';
+import { DATABASE_IDS, CHAT_TABLES } from '../config/constants';
 import type { Users } from '@/types/appwrite.d';
 import type { Models } from 'appwrite';
 
 export interface User extends Models.Document {
   id: string;
-  email?: string;
-  name?: string;
+  username?: string;
+  displayName?: string;
   walletAddress?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export class UserService {
-  private readonly databaseId = DATABASE_IDS.WHISPERRNOTE;
-  private readonly usersCollection = WHISPERRNOTE_TABLES.USERS;
+  private readonly databaseId = DATABASE_IDS.CHAT;
+  private readonly usersCollection = CHAT_TABLES.USERS;
 
   /**
    * Get user by ID from database
@@ -39,26 +39,10 @@ export class UserService {
     }
   }
 
-  /**
-   * Get user by email from database
-   */
-  async getUserByEmail(email: string): Promise<User | null> {
-    try {
-      const response = await tablesDB.listRows({
-        databaseId: this.databaseId,
-        tableId: this.usersCollection,
-        queries: [Query.equal('email', email), Query.limit(1)],
-      });
-      const rows = (response as any).rows || [];
-      return (rows[0] as User) || null;
-    } catch (error) {
-      console.error('Error getting user by email:', error);
-      return null;
-    }
-  }
+  // Note: users table does not store email; use account service for email
 
   /**
-   * Get user by username (name field in Appwrite account) - robust search
+   * Get user by username - robust search
    */
   async getUserByUsername(username: string): Promise<User | null> {
     try {
@@ -66,7 +50,7 @@ export class UserService {
       let response: any = await tablesDB.listRows({
         databaseId: this.databaseId,
         tableId: this.usersCollection,
-        queries: [Query.equal('name', username), Query.limit(1)],
+        queries: [Query.equal('username', username), Query.limit(1)],
       });
 
       if (response.rows?.length > 0) {
@@ -77,7 +61,7 @@ export class UserService {
       response = await tablesDB.listRows({
         databaseId: this.databaseId,
         tableId: this.usersCollection,
-        queries: [Query.search('name', username), Query.limit(1)],
+        queries: [Query.search('username', username), Query.limit(1)],
       });
 
       if (response.rows?.length > 0) {
@@ -92,7 +76,7 @@ export class UserService {
       });
 
       const found = (response.rows || []).find((doc: any) =>
-        doc.name?.toLowerCase() === username.toLowerCase()
+        doc.username?.toLowerCase() === username.toLowerCase()
       );
 
       return (found as User) || null;
@@ -130,7 +114,7 @@ export class UserService {
         databaseId: this.databaseId,
         tableId: this.usersCollection,
         queries: [
-          Query.search('name', searchTerm),
+          Query.search('username', searchTerm),
           Query.limit(limit),
         ],
       });
@@ -141,7 +125,7 @@ export class UserService {
           databaseId: this.databaseId,
           tableId: this.usersCollection,
           queries: [
-            Query.startsWith('name', searchTerm),
+            Query.startsWith('username', searchTerm),
             Query.limit(limit),
           ],
         });
@@ -159,7 +143,7 @@ export class UserService {
 
         // Filter manually for case-insensitive contains
         const filtered = (response.rows || []).filter((doc: any) =>
-          doc.name?.toLowerCase().includes(searchTerm.toLowerCase())
+          doc.username?.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
         return filtered.slice(0, limit) as User[];
@@ -205,7 +189,8 @@ export class UserService {
         tableId: this.usersCollection,
         rowId: userId,
         data: {
-          name: newUsername,
+          username: newUsername,
+          displayName: newUsername,
           updatedAt: new Date().toISOString(),
         },
       });
