@@ -316,35 +316,15 @@ export function MainLayout({ currentUser, onLogin, onLogout }: MainLayoutProps) 
         currentUserId={user?.id || ''}
         currentUsername={currentAccount?.name || appwriteUser?.name}
         onChatCreated={(conversationId) => {
-          // Create and select a demo conversation immediately
-          const demoConv: Conversation = {
+          // Select created conversation; rely on backend data
+          setSelectedConversation({
             id: conversationId,
-            participants: [user?.id || '', 'demo-user'],
+            participants: [user?.id || ''],
             type: 'direct',
-            lastMessage: {
-              id: 'demo-last',
-              senderId: user?.id || '',
-              recipientId: 'demo-user',
-              ciphertext: '🚀 Demo chat ready! Try sending gifts, crypto, or NFTs!',
-              nonce: '',
-              timestamp: new Date(),
-              ratchetHeader: '',
-              messageNumber: 0,
-            },
             createdAt: new Date(),
             updatedAt: new Date(),
-            metadata: {
-              name: `Demo Chat - ${conversationId.split('-')[1] || 'User'}`,
-              settings: {
-                ephemeralEnabled: false,
-                notificationsEnabled: true,
-                blockchainAnchoringEnabled: false,
-              },
-              isDemo: true,
-            } as any,
-          };
-          console.log('[MainLayout] Creating demo conversation:', demoConv);
-          setSelectedConversation(demoConv);
+            metadata: {} as any,
+          });
           setShowNewChat(false);
         }}
       />

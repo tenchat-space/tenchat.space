@@ -90,29 +90,7 @@ export function ChatInterface({ conversation, currentUser, onClose }: ChatInterf
     try {
       setIsLoading(true);
       
-      // Check if this is a self-chat or demo chat
-      if (conversation.metadata?.isSelfChat || conversation.metadata?.isDemo) {
-        // Load demo messages for instant presentation
-        const demoMessages = conversation.metadata?.demoMessages || [
-          { text: '👋 Welcome! This is a demo chat to showcase features', type: 'system' },
-          { text: '💎 Click the gift icon to send impressive gifts', type: 'system' },
-          { text: '💰 Try crypto transfers - supports 8 chains!', type: 'system' },
-          { text: '🎨 Everything works like the real app!', type: 'system' },
-        ];
-        
-        const demoMsgs: DecryptedMessage[] = demoMessages.map((msg: any, i: number) => ({
-          id: `demo-${i}`,
-          senderId: 'system',
-          recipientId: currentUser.id,
-          content: msg.text,
-          timestamp: new Date(Date.now() - (demoMessages.length - i) * 60000),
-          type: 'text' as const,
-        }));
-        
-        setMessages(demoMsgs);
-        setIsLoading(false);
-        return;
-      }
+      // No demo/self chat shortcuts: always load from backend when possible
       
       // Try loading from backend (TablesDB)
       try {
@@ -133,27 +111,8 @@ export function ChatInterface({ conversation, currentUser, onClose }: ChatInterf
         console.warn('Falling back to local message store:', e);
       }
 
-      // Fallback: use local encrypted store via stub service
-      const encryptedMsgs = await messagingService.getMessages(conversation.id);
-      setEncryptedMessages(encryptedMsgs);
-      const decryptedMsgs: DecryptedMessage[] = [];
-      for (const encMsg of encryptedMsgs) {
-        try {
-          const decrypted = await messagingService.decryptMessage(encMsg);
-          decryptedMsgs.push(decrypted);
-        } catch (error) {
-          console.error('Failed to decrypt message:', error);
-          decryptedMsgs.push({
-            id: encMsg.id,
-            senderId: encMsg.senderId,
-            recipientId: encMsg.recipientId,
-            content: '[Message could not be decrypted]',
-            timestamp: encMsg.timestamp,
-            type: 'text'
-          });
-        }
-      }
-      setMessages(decryptedMsgs);
+      // If no backend messages, show empty state
+      setMessages([]);
     } catch (error) {
       console.error('Failed to load messages:', error);
     } finally {
@@ -211,22 +170,17 @@ export function ChatInterface({ conversation, currentUser, onClose }: ChatInterf
       }
       setMessages(prev => [...prev, message]);
       
-      // Only persist to backend if it's not a demo/self chat
-      if (!conversation.metadata?.isSelfChat && !conversation.metadata?.isDemo) {
-        try {
-          await appwriteMessagingService.sendMessage({
-            conversationId: conversation.id,
-            senderId: currentUser.id,
-            content: messageContent,
-            contentType: 'text'
-          });
-        } catch (err) {
-          console.error('Failed to persist message to backend:', err);
-          throw err;
-        }
-      } else {
-        // Fallback local store for demo/self
-        await messagingService.sendMessage(message);
+      // Persist to backend
+      try {
+        await appwriteMessagingService.sendMessage({
+          conversationId: conversation.id,
+          senderId: currentUser.id,
+          content: messageContent,
+          contentType: 'text'
+        });
+      } catch (err) {
+        console.error('Failed to persist message to backend:', err);
+        throw err;
       }
       // For demo/self chats, message is just added to local state
     } catch (error) {
