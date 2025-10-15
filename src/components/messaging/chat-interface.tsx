@@ -32,6 +32,13 @@ import type { DecryptedMessage, EncryptedMessage, Conversation, User } from '../
 import { giftingService } from '@/lib/appwrite/services/gifting.service';
 import { messagingService as appwriteMessagingService } from '@/lib/appwrite/services';
 import { GiftDialog } from '../gifting/gift-dialog';
+import { useContextMenu } from '@/contexts/ContextMenuContext';
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+} from '../ui/context-menu';
 
 interface ChatInterfaceProps {
   conversation: Conversation;
@@ -501,6 +508,20 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({ message, isOwn, timestamp, currentUser }: MessageBubbleProps) {
+  const { showMenu } = useContextMenu();
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const menuContent = (
+      <ContextMenuContent>
+        <ContextMenuItem onSelect={() => navigator.clipboard.writeText(message.content)}>
+          Copy Text
+        </ContextMenuItem>
+      </ContextMenuContent>
+    );
+    showMenu(e.clientX, e.clientY, menuContent);
+  };
+
   if (message.type === 'gift') {
     try {
       const giftData = JSON.parse(message.content);
@@ -535,7 +556,11 @@ function MessageBubble({ message, isOwn, timestamp, currentUser }: MessageBubble
     : 'bg-gray-800/60 text-white border border-gray-600/30 backdrop-blur-sm';
 
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-200`}>
+    <div
+      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-200`}
+      onContextMenu={handleContextMenu}
+      data-custom-context-menu
+    >
       <div className="flex items-end gap-3 max-w-[70%]">
         {!isOwn && (
           <Avatar className="w-8 h-8 border border-gray-600">

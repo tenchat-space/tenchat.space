@@ -3,7 +3,7 @@
  * Simple, functional, accessible
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   MessageSquare,
   User,
@@ -19,6 +19,7 @@ import {
   Rss
 } from 'lucide-react';
 import { useAppwrite } from '@/contexts/AppwriteContext';
+import { ContextMenuProvider } from '@/contexts/ContextMenuContext';
 import { ConversationList } from '../messaging/conversation-list';
 import { ChatInterface } from '../messaging/chat-interface';
 import { NewChatModal } from '../messaging/new-chat-modal';
@@ -69,6 +70,24 @@ export function MainLayout({ currentUser, onLogin, onLogout }: MainLayoutProps) 
   const [showNewChat, setShowNewChat] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [hasSelfChat, setHasSelfChat] = useState(false);
+  const layoutRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleGlobalContextMenu = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (target.closest('[data-custom-context-menu]')) {
+        return;
+      }
+      event.preventDefault();
+    };
+
+    const currentLayout = layoutRef.current;
+    currentLayout?.addEventListener('contextmenu', handleGlobalContextMenu);
+
+    return () => {
+      currentLayout?.removeEventListener('contextmenu', handleGlobalContextMenu);
+    };
+  }, []);
 
   const getInitials = (name?: string) => {
     if (!name) return 'U';
@@ -109,9 +128,10 @@ export function MainLayout({ currentUser, onLogin, onLogout }: MainLayoutProps) 
   console.log('[MainLayout] isAuthenticated:', isAuthenticated);
 
   return (
-    <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
-      <Topbar
-        currentUser={user}
+    <ContextMenuProvider>
+      <div ref={layoutRef} className="h-screen bg-black text-white flex flex-col overflow-hidden">
+        <Topbar
+          currentUser={user}
         onConnect={onLogin}
         onLogout={onLogout}
         onOpenSettings={() => setShowSettings(true)}
@@ -339,5 +359,6 @@ export function MainLayout({ currentUser, onLogin, onLogout }: MainLayoutProps) 
         onOpenChange={setShowSettings}
       />
     </div>
+    </ContextMenuProvider>
   );
 }
