@@ -6,7 +6,7 @@ import { AuthModal } from './components/auth/auth-modal';
 import { AppwriteProvider, useAppwrite } from './contexts/AppwriteContext';
 
 function AppContent() {
-  const { currentAccount, currentProfile, isAuthenticated, isLoading, logout } = useAppwrite();
+  const { currentAccount, currentUser, isAuthenticated, isLoading, logout } = useAppwrite();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Show auth modal when not authenticated
@@ -25,9 +25,9 @@ function AppContent() {
   };
 
   // Convert Appwrite account to legacy User type for compatibility
-  const legacyUser = currentAccount && currentProfile ? {
+  const legacyUser = currentAccount && currentUser ? {
     id: currentAccount.$id,
-    displayName: currentProfile.displayName || currentAccount.name,
+    displayName: currentUser.displayName || currentAccount.name,
     identity: {
       id: currentAccount.$id,
       publicKey: '',
@@ -36,7 +36,7 @@ function AppContent() {
       oneTimePreKeys: [],
     },
     createdAt: new Date(currentAccount.$createdAt),
-    lastSeen: new Date(currentProfile.lastSeen || currentAccount.$createdAt),
+    lastSeen: new Date(currentUser.lastSeen || currentAccount.$createdAt),
   } : null;
 
   if (isLoading) {
