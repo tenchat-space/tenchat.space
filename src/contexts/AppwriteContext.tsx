@@ -14,9 +14,9 @@ interface AppwriteContextType {
   currentUser: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  loginWithWallet: (email: string, address: string, signature: string, message: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+  forceRefreshAuth: () => Promise<void>;
 }
 
 const AppwriteContext = createContext<AppwriteContextType | undefined>(undefined);
@@ -27,13 +27,13 @@ export function AppwriteProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check auth on mount
+  // Check auth on mount and set up polling
   useEffect(() => {
     let mounted = true;
-    
-    const initAuth = async () => {
+    let pollInterval: NodeJS.Timeout | null = null;
+
+    const checkAuth = async () => {
       try {
-        console.log('[Auth] Checking authentication...');
         const user = await account.get();
         
         if (!mounted) return;
@@ -57,6 +57,11 @@ export function AppwriteProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.log('[Auth] Not authenticated');
+        if (mounted) {
+          setCurrentAccount(null);
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+        }
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -64,10 +69,15 @@ export function AppwriteProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    initAuth();
+    // Check immediately
+    checkAuth();
+
+    // Set up polling every 1 second to detect new sessions
+    pollInterval = setInterval(checkAuth, 1000);
     
     return () => {
       mounted = false;
+      if (pollInterval) clearInterval(pollInterval);
     };
   }, []);
 
@@ -145,7 +155,7 @@ export function AppwriteProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const refreshUser = async () => {
+  const refreshProfile = async () => {
     if (!currentAccount) return;
     
     try {
@@ -158,7 +168,29 @@ export function AppwriteProvider({ children }: { children: React.ReactNode }) {
         setCurrentUser(dbUser);
       }
     } catch (error) {
-      console.error('[Auth] Error refreshing user:', error);
+      console.error('[Auth] Error refreshing profile:', error);
+    }
+  };
+
+  const forceRefreshAuth = async () => {
+    try {
+      const user = await account.get();
+      setCurrentAccount(user);
+      setIsAuthenticated(true);
+
+      const dbUser = await userService.upsertUser(user.$id, {
+        username: user.name || undefined,
+        displayName: user.name || undefined,
+        walletAddress: (user.prefs as any)?.walletEth?.toLowerCase?.(),
+      } as any);
+      if (dbUser) {
+        setCurrentUser(dbUser);
+      }
+    } catch (error) {
+      console.log('[Auth] Force refresh - no active session');
+      setCurrentAccount(null);
+      setCurrentUser(null);
+      setIsAuthenticated(false);
     }
   };
 
@@ -169,9 +201,9 @@ export function AppwriteProvider({ children }: { children: React.ReactNode }) {
         currentUser,
         isAuthenticated,
         isLoading,
-        loginWithWallet,
         logout,
-        refreshUser,
+        refreshProfile,
+        forceRefreshAuth,
       }}
     >
       {children}

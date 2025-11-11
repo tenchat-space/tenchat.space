@@ -6,33 +6,19 @@ import { AuthModal } from './components/auth/auth-modal';
 import { AppwriteProvider, useAppwrite } from './contexts/AppwriteContext';
 
 function AppContent() {
-  const { currentAccount, currentProfile, isAuthenticated, isLoading, forceRefreshAuth, logout } = useAppwrite();
+  const { currentAccount, currentProfile, isAuthenticated, isLoading, logout } = useAppwrite();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Always show auth modal when not authenticated (persistent overlay)
+  // Show auth modal when not authenticated
   useEffect(() => {
-    console.log('Auth state changed:', { isAuthenticated, isLoading, hasAccount: !!currentAccount });
-    
-    if (!isLoading && !isAuthenticated) {
-      console.log('Not authenticated, showing auth modal');
-      setShowAuthModal(true);
-    } else if (isAuthenticated) {
-      console.log('Authenticated, hiding auth modal');
-      setShowAuthModal(false);
+    if (!isLoading) {
+      setShowAuthModal(!isAuthenticated);
     }
-  }, [isAuthenticated, isLoading, currentAccount]);
-
-  const handleAuthSuccess = () => {
-    console.log('Auth success callback');
-    setShowAuthModal(false);
-    // Force a refresh to ensure we have the latest state
-    forceRefreshAuth();
-  };
+  }, [isAuthenticated, isLoading]);
 
   const handleLogout = async () => {
     try {
       await logout();
-      setShowAuthModal(true);
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -66,7 +52,7 @@ function AppContent() {
 
   return (
     <>
-      {/* Blur and disable interaction when not authenticated */}
+      {/* Blur UI when not authenticated */}
       <div className={!isAuthenticated ? 'blur-sm pointer-events-none' : ''}>
         <Chat 
           currentUser={legacyUser} 
@@ -75,16 +61,11 @@ function AppContent() {
         />
       </div>
       
-      {/* Persistent auth overlay - cannot be dismissed when not authenticated */}
+      {/* Auth overlay - shows when not authenticated */}
       <AuthModal 
         open={showAuthModal}
-        onOpenChange={(open) => {
-          // Only allow closing if authenticated
-          if (isAuthenticated) {
-            setShowAuthModal(open);
-          }
-        }}
-        onSuccess={handleAuthSuccess}
+        onOpenChange={setShowAuthModal}
+        onSuccess={() => setShowAuthModal(false)}
       />
       <Toaster position="top-right" />
     </>
