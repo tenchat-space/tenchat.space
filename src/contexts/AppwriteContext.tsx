@@ -4,8 +4,8 @@
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { account, functions } from '@/lib/appwrite/config/client';
-import { authService, userService } from '@/lib/appwrite';
+import { account } from '@/lib/appwrite/config/client';
+import { userService } from '@/lib/appwrite';
 import type { Models } from 'appwrite';
 import type { User } from '@/lib/appwrite';
 
@@ -82,70 +82,11 @@ export function AppwriteProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /**
-   * Login with Web3 wallet
-   * Uses the Appwrite Function for Web3 authentication
+   * Logout user
    */
-  const loginWithWallet = async (email: string, address: string, signature: string, message: string) => {
-    try {
-      console.log('[Auth] Logging in with wallet:', { email, address });
-
-      // Get function ID from environment
-      const functionId = import.meta.env.VITE_WEB3_FUNCTION_ID;
-      if (!functionId) {
-        throw new Error('VITE_WEB3_FUNCTION_ID not configured');
-      }
-
-      // Call Appwrite Function for Web3 auth
-      const execution = await functions.createExecution(
-        functionId,
-        JSON.stringify({ email, address, signature, message }),
-        false // Synchronous execution
-      );
-
-      // Parse response
-      const response = JSON.parse(execution.responseBody);
-
-      if (execution.responseStatusCode !== 200) {
-        throw new Error(response.error || 'Authentication failed');
-      }
-
-      console.log('[Auth] Function response:', response);
-
-      // Create Appwrite session
-      await account.createSession({
-        userId: response.userId,
-        secret: response.secret
-      });
-
-      // Get user data
-      const user = await account.get();
-      setCurrentAccount(user);
-      setIsAuthenticated(true);
-
-      // Ensure users row exists and load it (upsert)
-      try {
-        const dbUser = await userService.upsertUser(user.$id, {
-          username: user.name || undefined,
-          displayName: user.name || undefined,
-          walletAddress: (user.prefs as any)?.walletEth?.toLowerCase?.(),
-        } as any);
-        if (dbUser) {
-          setCurrentUser(dbUser);
-        }
-      } catch (error) {
-        console.error('[Auth] Error ensuring user row after wallet login:', error);
-      }
-
-      console.log('[Auth] Wallet login successful');
-    } catch (error) {
-      console.error('[Auth] Wallet login error:', error);
-      throw error;
-    }
-  };
-
   const logout = async () => {
     try {
-      await authService.logout();
+      await account.deleteSession('current');
       setCurrentAccount(null);
       setCurrentUser(null);
       setIsAuthenticated(false);
